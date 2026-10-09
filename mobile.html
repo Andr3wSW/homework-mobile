@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Screen Assistant</title>
+<style>
+:root {
+  --accent: #4f8cff;
+  --accent2: #2f6fff;
+  --bg: #0f1115;
+  --panel: #171b23;
+  --input: #1a1f2a;
+  --border: #2a3242;
+  --text: #f0f2f5;
+  --muted: #8e97a8;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Arial, sans-serif;
+}
+.app {
+  width: min(680px, 100%);
+  margin: auto;
+  padding: 18px;
+}
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+h1 { font-size: 21px; margin: 0; }
+.theme {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 11px;
+}
+#themeColor {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  overflow: hidden;
+  background: none;
+}
+#themeColor::-webkit-color-swatch-wrapper { padding: 0; }
+#themeColor::-webkit-color-swatch { border: 0; border-radius: 50%; }
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+label {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+input, textarea {
+  width: 100%;
+  background: var(--input);
+  color: white;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 11px;
+  outline: none;
+  font-size: 14px;
+}
+input:focus, textarea:focus {
+  border-color: var(--accent);
+}
+textarea {
+  min-height: 105px;
+  resize: vertical;
+  font-family: Arial, sans-serif;
+  line-height: 1.4;
+}
+button {
+  width: 100%;
+  border: 0;
+  border-radius: 9px;
+  padding: 12px;
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+}
+button.secondary {
+  background: var(--input);
+  border: 1px solid var(--border);
+  margin-top: 9px;
+}
+.preview {
+  width: 100%;
+  max-height: 300px;
+  object-fit: contain;
+  margin-top: 10px;
+  border-radius: 9px;
+  background: #080a0e;
+  display: none;
+}
+.status {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 8px;
+}
+.output {
+  background: #0b0e14;
+  border: 1px solid #202633;
+  border-radius: 9px;
+  padding: 12px;
+  min-height: 80px;
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.output pre {
+  overflow-x: auto;
+  padding: 9px;
+  background: #151a23;
+  border-radius: 7px;
+}
+.hint {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Screen Assistant</h1>
+    <label class="theme">
+      Theme
+      <input id="themeColor" type="color" value="#4f8cff">
+    </label>
+  </header>
+
+  <div class="card">
+    <label for="apiKey">Gemini API Key</label>
+    <input id="apiKey" type="password" autocomplete="off" placeholder="Enter your Gemini API key">
+  </div>
+
+  <div class="card">
+    <label for="prompt">What should the AI do?</label>
+    <textarea id="prompt">Look at my screenshot and answer my request. If there is a question or problem shown, solve it clearly and explain the answer.</textarea>
+  </div>
+
+  <div class="card">
+    <label>Screenshot</label>
+    <input id="image" type="file" accept="image/*">
+    <img id="preview" class="preview" alt="Screenshot preview">
+    <div id="status" class="status">Choose a screenshot from your phone.</div>
+  </div>
+
+  <button id="ask">ASK AI</button>
+
+  <div class="card" style="margin-top:12px">
+    <label>Response</label>
+    <div id="output" class="output">Ready.</div>
+  </div>
+
+  <div class="hint">
+    Your screenshot and prompt are sent directly to Google's Gemini API using the API key you provide.
+  </div>
+</div>
+
+<script>
+const DEFAULT_THEME = "#4f8cff";
+
+function hexToRgb(hex) {
+  hex = hex.replace("#", "");
+  return {
+    r: parseInt(hex.slice(0,2),16),
+    g: parseInt(hex.slice(2,4),16),
+    b: parseInt(hex.slice(4,6),16)
+  };
+}
+function rgbToHex(r,g,b) {
+  return "#" + [r,g,b].map(v =>
+    Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,"0")
+  ).join("");
+}
+function mix(a,b,amount) {
+  const x=hexToRgb(a), y=hexToRgb(b);
+  return rgbToHex(
+    x.r+(y.r-x.r)*amount,
+    x.g+(y.g-x.g)*amount,
+    x.b+(y.b-x.b)*amount
+  );
+}
+function applyTheme(color) {
+  document.documentElement.style.setProperty("--accent", color);
+  document.documentElement.style.setProperty("--accent2", mix(color,"#000000",.28));
+  document.documentElement.style.setProperty("--border", mix(color,"#151923",.65));
+}
+
+const color = document.getElementById("themeColor");
+const imageInput = document.getElementById("image");
+const preview = document.getElementById("preview");
+const status = document.getElementById("status");
+const output = document.getElementById("output");
+
+color.addEventListener("input", () => {
+  applyTheme(color.value);
+  localStorage.setItem("themeColor", color.value);
+});
+
+imageInput.addEventListener("change", () => {
+  const file = imageInput.files[0];
+  if (!file) return;
+  preview.src = URL.createObjectURL(file);
+  preview.style.display = "block";
+  status.textContent = `${file.name} selected.`;
+});
+
+document.getElementById("ask").addEventListener("click", async () => {
+  const key = document.getElementById("apiKey").value.trim();
+  const prompt = document.getElementById("prompt").value.trim();
+  const file = imageInput.files[0];
+
+  if (!key) {
+    output.textContent = "❌ Enter your Gemini API key.";
+    return;
+  }
+  if (!prompt) {
+    output.textContent = "❌ Enter a prompt.";
+    return;
+  }
+  if (!file) {
+    output.textContent = "❌ Choose a screenshot first.";
+    return;
+  }
+
+  output.textContent = "🧠 Sending screenshot + prompt to Gemini...";
+  status.textContent = "Uploading...";
+
+  try {
+    const base64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(",")[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+    const url =
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key="
+      + encodeURIComponent(key);
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { text: prompt },
+            {
+              inlineData: {
+                mimeType: file.type || "image/jpeg",
+                data: base64
+              }
+            }
+          ]
+        }]
+      })
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error?.message || "Gemini request failed.");
+
+    const answer =
+      data?.candidates?.[0]?.content?.parts?.map(p => p.text || "").join("") ||
+      "No response received.";
+
+    output.textContent = answer;
+    status.textContent = "Done.";
+    localStorage.setItem("apiKey", key);
+    localStorage.setItem("prompt", prompt);
+  } catch (error) {
+    output.textContent = "❌ " + error.message;
+    status.textContent = "Request failed.";
+  }
+});
+
+(function init() {
+  const savedKey = localStorage.getItem("apiKey");
+  const savedPrompt = localStorage.getItem("prompt");
+  const savedColor = localStorage.getItem("themeColor") || DEFAULT_THEME;
+
+  if (savedKey) document.getElementById("apiKey").value = savedKey;
+  if (savedPrompt) document.getElementById("prompt").value = savedPrompt;
+
+  color.value = savedColor;
+  applyTheme(savedColor);
+})();
+</script>
+</body>
+</html>

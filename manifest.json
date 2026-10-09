@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "Screen Assistant",
+  "version": "1.3.0",
+  "description": "AI assistant that can see your current screen and answer your prompt.",
+  "permissions": [
+    "sidePanel",
+    "scripting",
+    "activeTab",
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "<all_urls>",
+    "https://generativelanguage.googleapis.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "side_panel": {
+    "default_path": "popup.html"
+  },
+  "action": {
+    "default_title": "Screen Assistant"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["marked.min.js"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

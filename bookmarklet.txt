@@ -1,0 +1,1 @@
+javascript:(()=>{const u="https://YOUR-USERNAME.github.io/YOUR-REPOSITORY/mobile.html";location.href=u+"?from=bookmarklet&url="+encodeURIComponent(location.href)})()

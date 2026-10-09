@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --accent: #4f8cff;
+      --accent-2: #2f6fff;
+      --bg: #0f1115;
+      --panel: #171b23;
+      --input: #1a1f2a;
+      --border: #2a3242;
+      --output: #0b0e14;
+      --text: #e6e6e6;
+      --muted: #8e97a8;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      width: 100%;
+      min-width: 320px;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .container {
+      padding: 14px;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 18px;
+      color: #fff;
+    }
+
+    .theme-control {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .theme-control span {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    #themeColor {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      background: transparent;
+      cursor: pointer;
+      overflow: hidden;
+    }
+
+    #themeColor::-webkit-color-swatch-wrapper { padding: 0; }
+    #themeColor::-webkit-color-swatch {
+      border: 0;
+      border-radius: 50%;
+    }
+
+    .label {
+      font-size: 11px;
+      color: var(--muted);
+      margin: 0 0 5px;
+    }
+
+    input[type="password"], textarea {
+      width: 100%;
+      background: var(--input);
+      border: 1px solid var(--border);
+      color: white;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      outline: none;
+      font-size: 13px;
+      transition: border-color .2s, box-shadow .2s;
+    }
+
+    input[type="password"]:focus, textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 82px;
+      font-family: Arial, sans-serif;
+      line-height: 1.4;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform .2s, filter .2s;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.08);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .output {
+      margin-top: 12px;
+      background: var(--output);
+      border: 1px solid #1f2633;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      min-height: 60px;
+      max-height: 300px;
+      overflow-y: auto;
+      line-height: 1.45;
+    }
+
+    .output p:first-child { margin-top: 0; }
+    .output p:last-child { margin-bottom: 0; }
+    .output code {
+      background: #151a23;
+      padding: 2px 4px;
+      border-radius: 4px;
+    }
+    .output pre {
+      overflow-x: auto;
+      background: #151a23;
+      padding: 8px;
+      border-radius: 6px;
+    }
+
+    .hint {
+      font-size: 10px;
+      color: #697386;
+      margin-top: 7px;
+      line-height: 1.35;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <h2>Screen Assistant</h2>
+
+      <label class="theme-control" title="Choose accent color">
+        <span>Theme</span>
+        <input type="color" id="themeColor" value="#4f8cff" aria-label="Theme color">
+      </label>
+    </div>
+
+    <div class="label">Gemini API Key</div>
+    <input type="password" id="apiKey" placeholder="Enter Gemini API key">
+
+    <div class="label">What should the AI do?</div>
+    <textarea id="prompt" placeholder="Describe what you want the AI to do with your screen...">Look at my screen and answer my request. If there is a question or problem shown, solve it clearly and explain the answer.</textarea>
+
+    <button id="run">CAPTURE SCREEN &amp; ASK</button>
+
+    <div class="hint">
+      The visible tab is captured and sent to Gemini together with your prompt.
+    </div>
+
+    <div class="output" id="out">Ready.</div>
+  </div>
+
+  <script src="marked.min.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
